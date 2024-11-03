@@ -4,6 +4,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import spacy
 import re
+from concurrent.futures import ThreadPoolExecutor  # Importar ThreadPoolExecutor
 
 class MultiCompanyStockAnalyzer:
     def __init__(self, company_symbols=None, chunk_size=900000):
@@ -123,18 +124,23 @@ class MultiCompanyStockAnalyzer:
         
         results = {}
         for company, contexts in company_contexts.items():
-            # Analizar cada contexto de la empresa
+            # Analizar cada contexto de la empresa en paralelo
             sentiments = []
-            for context in contexts:
-                # Dividir en chunks si es necesario (para FinBERT que tiene límite de 512 tokens)
-                chunks = [context[i:i+512] for i in range(0, len(context), 512)]
-                
-                for chunk in chunks:
-                    sentiment_scores = self.sentiment_analyzer(chunk)[0]
-                    sentiments.append({
-                        score['label']: score['score'] for score in sentiment_scores
-                    })
-            
+
+            # Usar ThreadPoolExecutor para paralelizar el análisis de sentimientos
+            with ThreadPoolExecutor() as executor:
+                # Dividir en chunks de 512 caracteres y analizar en paralelo
+                for context in contexts:
+                    chunks = [context[i:i+512] for i in range(0, len(context), 512)]
+                    future_results = list(executor.map(self.sentiment_analyzer, chunks))
+                    
+                    # Agregar los resultados a la lista de sentimientos
+                    for sentiment_scores in future_results:
+                        if sentiment_scores:  # Verificar que hay resultados
+                            sentiments.append({
+                                score['label']: score['score'] for score in sentiment_scores[0]
+                            })
+
             # Calcular sentimiento promedio para la empresa
             if sentiments:  # Verificar que hay sentimientos para analizar
                 avg_sentiment = {
@@ -142,35 +148,15 @@ class MultiCompanyStockAnalyzer:
                     'negative': sum(s.get('negative', 0) for s in sentiments) / len(sentiments),
                     'neutral': sum(s.get('neutral', 0) for s in sentiments) / len(sentiments)
                 }
-                
-                # Obtener datos de mercado
-               ## market_data = self._get_market_data(company)
-                
+
                 results[company] = {
                     'sentiment': avg_sentiment,
                     'recommendation': self._get_recommendation(avg_sentiment),
                     'confidence': max(avg_sentiment.values()),
-                    ##'market_data': market_data,
                     'mention_count': len(contexts)
                 }
-        
-        return results
 
-# def _get_market_data(self, symbol):
-#     """
-#     Obtiene datos básicos del mercado
-#     """
-#     try:
-#         stock = yf.Ticker(symbol)
-#         info = stock.info
-#         return {
-#             'current_price': info.get('currentPrice'),
-#             'target_price': info.get('targetMeanPrice'),
-#             'sector': info.get('sector'),
-#             'day_change': info.get('regularMarketChangePercent')
-#         }
-#     except:
-#         return None
+        return results
 
     def _get_recommendation(self, sentiment):
         """
