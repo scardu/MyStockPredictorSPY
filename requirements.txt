@@ -1,0 +1,35 @@
+# Deep Learning Frameworks
+tensorflow>=2.0.0
+torch>=2.0.0
+tf-keras
+
+# NLP
+spacy>=3.0.0
+transformers
+huggingface-hub
+
+# Financial Analysis
+finbert
+yfinance
+pandas-datareader
+
+# Data Processing
+pandas
+numpy
+
+# Machine Learning
+scikit-learn
+
+# APIs
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
+youtube-transcript-api
+
+# Utilities
+requests
+tqdm
+
+# Video Processing
+opencv-python
+moviepy
