@@ -5,6 +5,10 @@ from datetime import datetime, timedelta
 import spacy
 import re
 from concurrent.futures import ThreadPoolExecutor  # Importar ThreadPoolExecutor
+import requests
+
+API_URL = "https://api-inference.huggingface.co/models/distilbert/distilbert-base-uncased-finetuned-sst-2-english"
+headers = {"Authorization": "Bearer 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"}
 
 class MultiCompanyStockAnalyzer:
     def __init__(self, company_symbols=None, chunk_size=900000):
@@ -14,6 +18,8 @@ class MultiCompanyStockAnalyzer:
             model="ProsusAI/finbert",
             return_all_scores=True
         )
+
+        self.sentiment_analyzer = self.__remote_sentiment_analyzer
         
         # Cargar modelo spaCy para NER (Named Entity Recognition)
         self.nlp = spacy.load("en_core_web_sm")
@@ -29,6 +35,16 @@ class MultiCompanyStockAnalyzer:
             for name in names
         }
 
+    def __query_remote_finbert(self, payload):
+        response = requests.post(API_URL, headers=headers, json=payload)
+        return response.json()
+
+    def __remote_sentiment_analyzer(self, text):
+        output = self.__query_remote_finbert({
+            "inputs": text
+        })
+        print("chunk processed")
+        return output
     def chunk_text(self, text):
         """
         Divide el texto en fragmentos más pequeños, intentando mantener oraciones completas
