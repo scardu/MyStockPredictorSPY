@@ -19,7 +19,7 @@ class MultiCompanyStockAnalyzer:
             return_all_scores=True
         )
 
-        self.sentiment_analyzer = self.__remote_sentiment_analyzer
+        #self.sentiment_analyzer = self.__remote_sentiment_analyzer
         
         # Cargar modelo spaCy para NER (Named Entity Recognition)
         self.nlp = spacy.load("en_core_web_sm")
