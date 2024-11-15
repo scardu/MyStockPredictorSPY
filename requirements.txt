@@ -9,7 +9,6 @@ transformers
 huggingface-hub
 
 # Financial Analysis
-finbert
 yfinance
 pandas-datareader
 
