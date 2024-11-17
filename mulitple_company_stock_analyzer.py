@@ -6,6 +6,10 @@ import spacy
 import re
 from concurrent.futures import ThreadPoolExecutor  # Importar ThreadPoolExecutor
 import requests
+import time
+import numpy as np
+
+
 
 API_URL = "https://api-inference.huggingface.co/models/distilbert/distilbert-base-uncased-finetuned-sst-2-english"
 headers = {"Authorization": "Bearer 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"}
@@ -26,7 +30,157 @@ class MultiCompanyStockAnalyzer:
         self.chunk_size = chunk_size
         
         # Lista de símbolos de empresas conocidas (opcional)
-        self.company_symbols = company_symbols or {}
+        self.company_symbols = {
+                    'AAPL': ['apple', 'apple inc.'],
+                    'MSFT': ['microsoft', 'microsoft corporation'],
+                    'AMZN': ['amazon', 'amazon.com'],
+                    'GOOG': ['google', 'alphabet'],
+                    'TSLA': ['tesla'],
+                    'NVDA': ['nvidia'],
+                    'PFE': ['pfizer'],
+                    'JNJ': ['johnson & johnson'],
+                    'V': ['visa'],
+                    'UNH': ['unitedhealth group'],
+                    'PYPL': ['paypal'],
+                    'COST': ['costco'],
+                    'HD': ['home depot'],
+                    'DIS': ['disney'],
+                    'NFLX': ['netflix'],
+                    'ADBE': ['adobe'],
+                    'CMCSA': ['comcast'],
+                    'PEP': ['pepsico'],
+                    'MCD': ['mcdonald''s'],
+                    'INTC': ['intel'],
+                    'CSCO': ['cisco'],
+                    'ABBV': ['abbvie'],
+                    'AVGO': ['broadcom'],
+                    'TMO': ['thermo fisher scientific'],
+                    'QCOM': ['qualcomm'],
+                    'AMGN': ['amgen'],
+                    'SHOP': ['shopify'],
+                    'MRNA': ['moderna'],
+                    'TMUS': ['t-mobile'],
+                    'ISRG': ['intuitive surgical'],
+                    'AMD': ['advanced micro devices'],
+                    'MDLZ': ['mondelez international'],
+                    'SBUX': ['starbucks'],
+                    'BKNG': ['booking holdings'],
+                    'TXN': ['texas instruments'],
+                    'ATVI': ['activision blizzard'],
+                    'GILD': ['gilead sciences'],
+                    'VRTX': ['vertex pharmaceuticals'],
+                    'REGN': ['regeneron pharmaceuticals'],
+                    'EBAY': ['ebay'],
+                    'CHTR': ['charter communications'],
+                    'LRCX': ['lam research'],
+                    'ADSK': ['autodesk'],
+                    'SNAP': ['snap'],
+                    'CTSH': ['cognizant'],
+                    'LULU': ['lululemon athletica'],
+                    'KHC': ['kraft heinz'],
+                    'DXCM': ['dexcom'],
+                    'FOXA': ['fox'],
+                    'ZM': ['zoom video communications'],
+                    'NXPI': ['nxp semiconductors'],
+                    'AMAT': ['applied materials'],
+                    'FAST': ['fastenal'],
+                    'FISV': ['fiserv'],
+                    'CPRT': ['copart'],
+                    'ASML': ['asml holding'],
+                    'CRWD': ['crowdstrike'],
+                    'SGEN': ['seagen'],
+                    'MELI': ['mercadolibre'],
+                    'PANW': ['palo alto networks'],
+                    'PATH': ['uipath'],
+                    'FTNT': ['fortinet'],
+                    'DDOG': ['datadog'],
+                    'KLAC': ['kla'],
+                    'INTU': ['intuit'],
+                    'DOCU': ['docusign'],
+                    'SPLK': ['splunk'],
+                    'CTAS': ['cintas'],
+                    'TEAM': ['atlassian'],
+                    'NDAQ': ['nasdaq'],
+                    'ZS': ['zscaler'],
+                    'FIVN': ['five9'],
+                    'ETSY': ['etsy'],
+                    'PAYC': ['paycom software'],
+                    'CDNS': ['cadence design systems'],
+                    'BIIB': ['biogen'],
+                    'PTON': ['peloton'],
+                    'XPEV': ['xpeng'],
+                    'OKTA': ['okta'],
+                    'SMAR': ['smartsheet'],
+                    'ABNB': ['airbnb'],
+                    'VEEV': ['veeva systems'],
+                    'PINS': ['pinterest'],
+                    'PLTR': ['palantir technologies'],
+                    'UBER': ['uber'],
+                    'COIN': ['coinbase global'],
+                    'RIVN': ['rivian automotive'],
+                    'TWLO': ['twilio'],
+                    'ZI': ['zoominfo technologies'],
+                    'CRSP': ['crispr therapeutics'],
+                    'CVNA': ['carvana'],
+                    'RBLX': ['roblox'],
+                    'SOFI': ['sofi technologies'],
+                    'DKNG': ['draftkings'],
+                    'FVRR': ['fiverr international'],
+                    'CRWD': ['crowdstrike holdings'],
+                    'BILL': ['bill.com holdings'],
+                    'MTCH': ['match group'],
+                    'ROKU': ['roku'],
+                    'UPST': ['upstart'],
+                    'TTWO': ['take-two interactive software'],
+                    'MRNA': ['moderna'],
+                    'DASH': ['doordash'],
+                    'DXCM': ['dexcom'],
+                    'EXPE': ['expedia group'],
+                    'BKNG': ['booking holdings'],
+                    'WBD': ['warner bros. discovery'],
+                    'HOOD': ['robinhood markets'],
+                    'ADBE': ['adobe'],
+                    'STNE': ['stoneco'],
+                    'ABNB': ['airbnb'],
+                    'HOOD': ['robinhood markets'],
+                    'ZY': ['zynga'],
+                    'CHWY': ['chewy'],
+                    'COUP': ['coupa software'],
+                    'AFRM': ['affirm holdings'],
+                    'SAVA': ['cassava sciences'],
+                    'DUOL': ['duolingo'],
+                    'AMWL': ['amwell'],
+                    'FRPT': ['freshpet'],
+                    'LCID': ['lucid group'],
+                    'RBLX': ['roblox'],
+                    'GDRX': ['goodrx holdings'],
+                    'XPEV': ['xpeng'],
+                    'NIO': ['nio'],
+                    'LMND': ['lemonade'],
+                    'OPEN': ['opendoor technologies'],
+                    'WEBR': ['weber'],
+                    'WISH': ['contextlogic'],
+                    'PTRA': ['proterra'],
+                    'BOWX': ['boxwood acquisition corp'],
+                    'IONQ': ['ionq'],
+                    'CLOV': ['clover health investments'],
+                    'DWAC': ['digital world acquisition corp'],
+                    'SKLZ': ['skillz'],
+                    'ASTS': ['ast spacemobile'],
+                    'FIGS': ['figs'],
+                    'SI': ['silvergate capital'],
+                    'UPST': ['upstart'],
+                    'IIPR': ['innovative industrial properties'],
+                    'STLD': ['steel dynamics'],
+                    'RXT': ['rackspace technology'],
+                    'TLS': ['telos'],
+                    'NEWR': ['new relic'],
+                    'GTLB': ['gitlab'],
+                    'ARCT': ['arcturus therapeutics'],
+                    'SLQT': ['selectquote'],
+                    'ASTS': ['ast spacemobile'],
+                    'EVBG': ['everbridge']
+                }
         
         # Crear diccionario inverso de nombres a símbolos
         self.company_names = {
@@ -94,7 +248,7 @@ class MultiCompanyStockAnalyzer:
             stock_symbols = re.findall(r'[\$]?([A-Z]{1,5})\b', chunk)
             companies.update(stock_symbols)
         
-        return list(companies)
+        return [c for c in companies if c in self.company_symbols]
 
     def extract_company_contexts(self, text, window_size=1000):
         """
@@ -135,28 +289,55 @@ class MultiCompanyStockAnalyzer:
         """
         Analiza una transcripción y retorna análisis por empresa
         """
+        total_start_time = time.time()
+        metrics = {}
+
         # Extraer contextos por empresa
+        context_start = time.time()
         company_contexts = self.extract_company_contexts(transcript)
-        
+        context_time = time.time() - context_start
+        metrics['context_extraction'] = context_time
+        print(f"1. Tiempo para extraer contextos: {context_time:.2f} segundos")
+        print(f"   Número de empresas encontradas: {len(company_contexts)}")
         results = {}
+        total_contexts = 0
+        total_chunks = 0
+
         for company, contexts in company_contexts.items():
             # Analizar cada contexto de la empresa en paralelo
-            sentiments = []
-
+            if company in self.company_symbols:
+                print(f"\nProcesando empresa: {company}")
+                company_start = time.time()
+                total_contexts += len(contexts)
+                sentiments = []
+                chunk_times = []
+                chunk_start = time.time()
             # Usar ThreadPoolExecutor para paralelizar el análisis de sentimientos
             with ThreadPoolExecutor() as executor:
                 # Dividir en chunks de 512 caracteres y analizar en paralelo
-                for context in contexts:
+                for context_index, context in enumerate(contexts):
+                    print(f"   Analizando contexto {context_index + 1}/{len(contexts)} para {company}...")
                     chunks = [context[i:i+512] for i in range(0, len(context), 512)]
+                    total_chunks += len(chunks)
+                    batch_start = time.time()
                     future_results = list(executor.map(self.sentiment_analyzer, chunks))
-                    
-                    # Agregar los resultados a la lista de sentimientos
-                    for sentiment_scores in future_results:
-                        if sentiment_scores:  # Verificar que hay resultados
-                            sentiments.append({
-                                score['label']: score['score'] for score in sentiment_scores[0]
+                    chunk_time = time.time() - batch_start
+                    chunk_times.append(chunk_time)
+                    for chunk_index, chunk in enumerate(chunks):
+                        try:
+                            chunk_start = time.time()
+                            sentiment_scores = self.sentiment_analyzer(chunk)
+                            chunk_time = time.time() - chunk_start
+                            chunk_times.append(chunk_time)
+                            print(f"      Chunk {chunk_index + 1}/{len(chunks)} procesado en {chunk_time:.2f} segundos.")
+                            if sentiment_scores:
+                                sentiments.append({
+                                score['label']: score['score'] 
+                                for score in sentiment_scores[0]
                             })
-
+                        except Exception as e:
+                            print(f"      Error procesando chunk {chunk_index + 1}: {e}")
+            chunk_processing_time = time.time() - chunk_start
             # Calcular sentimiento promedio para la empresa
             if sentiments:  # Verificar que hay sentimientos para analizar
                 avg_sentiment = {
@@ -171,7 +352,34 @@ class MultiCompanyStockAnalyzer:
                     'confidence': max(avg_sentiment.values()),
                     'mention_count': len(contexts)
                 }
+                print(f"   Sentimiento promedio para {company}: {avg_sentiment}")
+            company_time = time.time() - company_start
+            print(f"2. Procesamiento de empresa {company}:")
+            print(f"   - Número de contextos: {len(contexts)}")
+            print(f"   - Número de chunks: {len(chunks)}")
+            print(f"   - Tiempo promedio por chunk: {np.mean(chunk_times):.2f} segundos")
+            print(f"   - Tiempo total de la empresa: {company_time:.2f} segundos")
 
+        total_time = time.time() - total_start_time
+        print("\nResumen de rendimiento:")
+        print(f"Tiempo total de ejecución: {total_time:.2f} segundos")
+        print(f"Total de empresas procesadas: {len(company_contexts)}")
+        print(f"Total de contextos analizados: {total_contexts}")
+        print(f"Total de chunks procesados: {total_chunks}")
+        print(f"Tiempo promedio por chunk: {(total_time/total_chunks if total_chunks else 0):.2f} segundos")
+
+        results['_metrics'] = {
+          'total_time': total_time,
+          'context_extraction_time': context_time,
+          'companies_processed': len(company_contexts),
+          'total_contexts': total_contexts,
+          'total_chunks': total_chunks,
+          'avg_time_per_chunk': total_time/total_chunks if total_chunks else 0
+        }
+
+
+
+      
         return results
 
     def _get_recommendation(self, sentiment):
