@@ -13,13 +13,19 @@ class NasdaqVideoAnalyzer:
         """
         API_KEY = 'AIzaSyBV6c9-fj7pP7YtFRbZWn-FviZiPvfEfZM'
         self.youtube = build('youtube', 'v3', developerKey=API_KEY)
+                
+
         self.search_terms = [
-            'NASDAQ stock market news',
-            'NASDAQ weekly review',
-            'NASDAQ stock analysis',
-            'NASDAQ market update'
-        ]
-        
+            'NASDAQ stock forecast',
+            'NASDAQ future predictions',
+            'NASDAQ market outlook',
+            'NASDAQ trend analysis',
+            'NASDAQ 2024 predictions',
+            'Best NASDAQ stocks to buy now',
+            'NASDAQ bull or bear market 2024',
+            'NASDAQ technical analysis future trends',
+            'NASDAQ stocks to watch'
+]
     def search_recent_videos(self, days_back: int = 7) -> List[Dict[str, Any]]:
         """
         Busca videos relevantes de la última semana
@@ -33,7 +39,7 @@ class NasdaqVideoAnalyzer:
                     q=search_term,
                     type='video',
                     part='id,snippet',
-                    maxResults=10,
+                    maxResults=25,
                     publishedAfter=published_after,
                     relevanceLanguage='en',
                     order='relevance'
@@ -114,7 +120,7 @@ class NasdaqVideoAnalyzer:
             videos = [v for v in videos if int(v.get('views', '0')) >= min_views]
             
             # Seleccionar solo los primeros 3 videos
-            videos = videos[:10]
+            videos = videos[:100]
             
             results = []
             for video in videos:
