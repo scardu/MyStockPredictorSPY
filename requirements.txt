@@ -1,12 +1,8 @@
+
 # Deep Learning Frameworks
 tensorflow>=2.0.0
 torch>=2.0.0
 tf-keras
-
-# NLP
-spacy>=3.0.0
-transformers
-huggingface-hub
 
 # Financial Analysis
 yfinance
@@ -14,7 +10,7 @@ pandas-datareader
 
 # Data Processing
 pandas
-numpy
+numpy==1.26.4
 
 # Machine Learning
 scikit-learn
@@ -32,3 +28,8 @@ tqdm
 # Video Processing
 opencv-python-headless==4.7.0.72
 moviepy
+
+# NLP
+spacy>=3.0.0
+transformers==4.48.3
+huggingface-hub
